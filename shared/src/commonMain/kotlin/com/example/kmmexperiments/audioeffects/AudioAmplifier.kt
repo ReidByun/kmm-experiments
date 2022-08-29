@@ -13,6 +13,5 @@ class AudioAmplifier (
 ): AudioEffect {
 
     override fun process(buffer: Any, frameCount: Int) {
-
     }
 }
