@@ -3,6 +3,7 @@ import shared
 
 struct ContentView: View {
 	let greet = Greeting().greeting()
+  let test = TestClass(testValue: 20).testFunc()
 
 	var body: some View {
 		Text(greet)
