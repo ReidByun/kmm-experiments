@@ -13,5 +13,10 @@ class AudioAmplifier (
 ): AudioEffect {
 
     override fun process(buffer: Any, frameCount: Int) {
+        print("KMM Amplifier - Common")
+    }
+
+    fun test() {
+        print("test amplififer")
     }
 }

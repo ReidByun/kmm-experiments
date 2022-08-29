@@ -51,13 +51,14 @@ class AudioEffectNode: Equatable {
   }
   
   func getAudioEffectNode(renew: Bool = false)-> AVAudioSourceNode? {
-    if audioEffectNode == nil || renew {
+    if renew {
       self.preprocessingUnit = AudioPreprocessor(samplingRate: self.samplingRate, channel: Int32(self.channel), pcmFormat: Int32(self.pcmFormat), interleaved: self.interleaved)
       self.postProcessorUnit = AudioPostprocessor(samplingRate: self.samplingRate, channel: Int32(self.channel), pcmFormat: Int32(self.pcmFormat), interleaved: self.interleaved)
       self.amplifierUnit = AudioAmplifier(samplingRate: self.samplingRate, channel: Int32(self.channel), pcmFormat: Int32(self.pcmFormat), interleaved: self.interleaved)
       
       audioEffectNode = AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
         let ablPointer = UnsafeMutableAudioBufferListPointer(audioBufferList)
+       
         self.audioProcessing(ablPointer: ablPointer, frameCount: Int(frameCount))
         return noErr
       }
@@ -72,16 +73,23 @@ class AudioEffectNode: Equatable {
           let amplifierUnit = amplifierUnit else {
       return
     }
-    
-    var bufferArray: [UnsafeMutableBufferPointer<Float>] = []
-    for bufferBlock in ablPointer {
-      let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(bufferBlock)
-      bufferArray.append(buf)
+    let dispatchGroup = DispatchGroup()
+    dispatchGroup.enter()
+
+    DispatchQueue.main.async {
+      var bufferArray: [UnsafeMutableBufferPointer<Float>] = []
+      for bufferBlock in ablPointer {
+        let buf: UnsafeMutableBufferPointer<Float> = UnsafeMutableBufferPointer(bufferBlock)
+        bufferArray.append(buf)
+      }
+      //amplifierUnit.test()
+      preprocessingUnit.process(buffer: bufferArray as Any, frameCount: Int32(frameCount))
+      amplifierUnit.process(buffer: bufferArray as Any, frameCount: Int32(frameCount))
+      postProcessorUnit.process(buffer: bufferArray as Any, frameCount: Int32(frameCount))
+      dispatchGroup.leave()
     }
+    dispatchGroup.wait()
     
-    preprocessingUnit.process(buffer: bufferArray as Any, frameCount: Int32(frameCount))
-    amplifierUnit.process(buffer: bufferArray as Any, frameCount: Int32(frameCount))
-    postProcessorUnit.process(buffer: bufferArray as Any, frameCount: Int32(frameCount))
   }
   
   func updateSource(

@@ -25,6 +25,6 @@ actual class AudioPostprocessor actual constructor(
 
 
  actual override fun process(buffer: Any, frameCount: Int) {
-
+  print("KMM post processor - iOS")
  }
 }
